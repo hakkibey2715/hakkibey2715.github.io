@@ -1,0 +1,13 @@
+[
+  {
+    "id": "ilk-yazi",
+    "title": "Defterin nasıl kullanılır",
+    "tag": "calisma",
+    "kind": "text",
+    "body": "Bu ilk yazıyı örnek olsun diye koydum. İstediğin zaman “Düzenle” ya da “Sil” ile değiştirebilirsin.\n\nYazı eklemek için sağ üstteki kalem simgesinden yazar girişi yap. Sonra soldaki “+ Yeni yazı” düğmesine bas, bir konu seç, türünü belirle (Video + açıklama ya da Sadece yazı) ve istersen fotoğraf ekle.\n\nSağdaki not alanı gizli bir depoda tutulur. Siteye girenler notlarını göremez.\n\nMIT için öneri: Her çalışmanda neyi denediğini, neyin işe yaramadığını ve ne öğrendiğini yaz. İki yıl sonra en değerli kısım bu süreç olacak.",
+    "video": null,
+    "photos": [],
+    "createdAt": 1795032842703,
+    "updatedAt": 1795032842703
+  }
+]
