@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>İsmail'in Defteri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Düzen: üst bar (ad + tarih) · sol kaydırılabilir yazı listesi · ortada açık yazı · sağda not paneli. Mavi tükenmez + defter havası. */
+:root {
+  --paper: #f3f5f8; --panel: #ffffff; --ink: #18212f; --muted: #5d6878; --line: #d8dee7;
+  --accent: #2346b8; --accent-soft: #e4eafb; --danger: #b3261e;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --t-tarih: #9a5b13; --t-motogp: #c62828; --t-bilim: #0f7b72; --t-sanat: #7b3fb5;
+  --t-film: #c2185b; --t-kitap: #2e7d32; --t-calisma: #2346b8;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #10141b; --panel: #171c25; --ink: #e6ebf2; --muted: #96a1b2; --line: #2a3240;
+    --accent: #8aa6ff; --accent-soft: #1e2840; --danger: #ff8a80;
+    --t-tarih: #e0a458; --t-motogp: #ff6b6b; --t-bilim: #4fd1c5; --t-sanat: #c39bf0;
+    --t-film: #f48fb1; --t-kitap: #7bd389; --t-calisma: #8aa6ff;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--font-body); display: flex; flex-direction: column; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
+.brand small { display: block; font: 500 12px var(--font-body); color: var(--muted); letter-spacing: 0; }
+.top-right { display: flex; align-items: center; gap: 10px; }
+.today { border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.today b { display: block; font-family: var(--font-display); font-size: 16px; }
+.today span { font-size: 12px; color: var(--muted); }
+.icon-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; width: 38px; height: 38px; cursor: pointer; display: grid; place-items: center; color: var(--muted); }
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+.icon-btn.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+main.layout { flex: 1; min-height: 0; display: grid; gap: 16px; padding: 16px 20px; grid-template-columns: 280px minmax(0, 1fr) 280px; }
+.col { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; min-height: 0; display: flex; flex-direction: column; }
+
+.list-head { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: 500; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.btn.danger { color: var(--danger); }
+.btn.danger.armed { background: var(--danger); border-color: var(--danger); color: var(--panel); }
+.btn:disabled { opacity: .5; cursor: default; }
+#search { border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--paper); width: 100%; }
+#postList { list-style: none; margin: 0; padding: 6px; overflow-y: auto; flex: 1; }
+#postList li button { width: 100%; text-align: left; border: 0; background: none; border-radius: 8px; padding: 10px; cursor: pointer; display: grid; gap: 4px; border-left: 3px solid transparent; }
+#postList li button:hover { background: var(--accent-soft); }
+#postList li button[aria-current="true"] { background: var(--accent-soft); border-left-color: var(--accent); }
+.p-title { font-weight: 600; line-height: 1.3; }
+.p-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: var(--c); border: 1px solid currentColor; white-space: nowrap; }
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.empty-list { color: var(--muted); font-size: 13px; padding: 12px; }
+
+.reader { overflow-y: auto; padding: 28px 32px; }
+.reader article, form.editor { max-width: 68ch; margin: 0 auto; display: grid; gap: 16px; }
+.reader h1 { font-family: var(--font-display); font-size: 32px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.015em; }
+.reader .meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: var(--muted); font-size: 13px; }
+.reader .body { font-family: var(--font-read); font-size: 18px; line-height: 1.7; }
+.reader .body p { margin: 0 0 1em; white-space: pre-line; }
+.reader video { width: 100%; border-radius: 10px; background: #000; max-height: 60vh; }
+.gallery { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.gallery button { border: 0; padding: 0; background: var(--paper); border-radius: 8px; overflow: hidden; cursor: zoom-in; aspect-ratio: 4 / 3; }
+.gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery.single { grid-template-columns: 1fr; }
+.gallery.single button { aspect-ratio: auto; }
+.gallery.single img { height: auto; max-height: 70vh; object-fit: contain; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.welcome p { color: var(--muted); }
+
+.field { display: grid; gap: 6px; }
+.field > label, .field > .lbl { font-size: 13px; font-weight: 600; }
+.field input[type="text"], .field input[type="password"], .field textarea { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--paper); width: 100%; }
+#f-title { font-family: var(--font-display); font-size: 22px; }
+#f-body { min-height: 240px; font-family: var(--font-read); font-size: 17px; line-height: 1.6; resize: vertical; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 5px 12px; cursor: pointer; font-size: 13px; color: var(--c); font-weight: 600; }
+.chip[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: var(--panel); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; width: fit-content; }
+.seg button { border: 0; background: var(--panel); padding: 8px 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.thumb { position: relative; width: 96px; height: 72px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.thumb button { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #fff; cursor: pointer; line-height: 1; }
+.hint { font-size: 12px; color: var(--muted); }
+.status { font-size: 13px; color: var(--muted); min-height: 1.2em; }
+.status.err { color: var(--danger); }
+
+.notes { padding: 14px; gap: 10px; }
+.notes h2 { font-family: var(--font-display); font-size: 17px; margin: 0; }
+.notes .for { font-size: 12px; color: var(--muted); }
+#notes { flex: 1; min-height: 200px; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; resize: none; line-height: 26px;
+  background: repeating-linear-gradient(to bottom, transparent 0 25px, var(--line) 25px 26px) var(--paper); background-attachment: local; }
+
+.banner { margin: 12px 20px 0; padding: 8px 12px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
+
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); padding: 0; max-width: min(520px, calc(100vw - 32px)); width: 100%; }
+dialog::backdrop { background: rgba(10, 14, 22, .55); }
+dialog form { padding: 20px; display: grid; gap: 14px; }
+dialog h2 { font-family: var(--font-display); margin: 0; font-size: 20px; }
+#lightbox { max-width: 96vw; width: auto; background: #000; border: 0; }
+#lightbox img { display: block; max-width: 96vw; max-height: 90vh; }
+#lightbox button { position: absolute; top: 8px; right: 8px; }
+
+@media (max-width: 1000px) { main.layout { grid-template-columns: 240px minmax(0, 1fr); } .notes { grid-column: 1 / -1; min-height: 240px; } }
+@media (max-width: 640px) {
+  body { display: block; height: auto; }
+  main.layout { display: flex; flex-direction: column; padding: 12px 16px; }
+  #postList { max-height: 260px; }
+  .reader { padding: 20px 16px; } .reader h1 { font-size: 26px; }
+  header.top { padding: 10px 16px; } .today span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">İsmail'in Defteri<small>Çalışmalar, notlar, merak ettiklerim</small></div>
+  <div class="top-right">
+    <div class="today" aria-label="Bugünün tarihi"><b id="todayDate"></b><span id="todayDay"></span></div>
+    <button class="icon-btn" id="loginBtn" type="button" title="Yazar girişi" aria-label="Yazar girişi">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    </button>
+  </div>
+</header>
+<div class="banner" id="banner" hidden></div>
+
+<main class="layout">
+  <aside class="col" aria-label="Yazılar">
+    <div class="list-head">
+      <button class="btn primary" id="newBtn" type="button" hidden>+ Yeni yazı</button>
+      <input id="search" type="search" placeholder="Yazılarda ara" aria-label="Yazılarda ara">
+    </div>
+    <ul id="postList"><li class="empty-list">Yazılar yükleniyor…</li></ul>
+  </aside>
+  <section class="col reader" id="reader" aria-live="polite"></section>
+  <aside class="col notes" aria-label="Notlar">
+    <h2>Notlarım</h2>
+    <div class="for" id="notesFor"></div>
+    <textarea id="notes" placeholder="Aklına geleni buraya yaz. Kendiliğinden kaydedilir." aria-label="Notlar"></textarea>
+    <div class="status" id="notesStatus"></div>
+  </aside>
+</main>
+
+<dialog id="loginDlg">
+  <form method="dialog" id="loginForm">
+    <h2>Yazar girişi</h2>
+    <p class="hint">Bu bilgiler sadece bu bilgisayarın tarayıcısında saklanır. Siteye girenler göremez.</p>
+    <div class="field"><label for="g-owner">GitHub kullanıcı adı</label><input id="g-owner" type="text" autocomplete="username"></div>
+    <div class="field"><label for="g-repo">Site deposu</label><input id="g-repo" type="text"></div>
+    <div class="field"><label for="g-notes">Not deposu (gizli)</label><input id="g-notes" type="text" value="defter-notlar"></div>
+    <div class="field"><label for="g-token">GitHub anahtarı (token)</label><input id="g-token" type="password" autocomplete="off"></div>
+    <div class="status" id="g-status" role="status"></div>
+    <div class="actions">
+      <button class="btn primary" id="g-save" type="submit" value="save">Giriş yap</button>
+      <button class="btn" id="g-cancel" type="button">Kapat</button>
+      <button class="btn danger" id="g-logout" type="button">Çıkış yap</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="lightbox"><img id="lbImg" alt=""><button class="btn" type="button" id="lbClose">Kapat</button></dialog>
+
+<script>
+"use strict";
+const TAGS = [
+  { key: "tarih", name: "Tarih", color: "var(--t-tarih)" },
+  { key: "motogp", name: "MotoGP", color: "var(--t-motogp)" },
+  { key: "bilim", name: "Bilim", color: "var(--t-bilim)" },
+  { key: "sanat", name: "Sanat", color: "var(--t-sanat)" },
+  { key: "film", name: "Film ve Dizi", color: "var(--t-film)" },
+  { key: "kitap", name: "Kitap", color: "var(--t-kitap)" },
+  { key: "calisma", name: "Çalışmalarım", color: "var(--t-calisma)" },
+];
+const MAX_MB = 50;
+const tagOf = k => TAGS.find(t => t.key === k) || TAGS[6];
+const $ = id => document.getElementById(id);
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (_) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (_) {} },
+};
+
+let posts = [], currentId = null, editing = null;
+let cfg = store.get("defter-cfg");           // {owner, repo, notesRepo, token}
+let loggedIn = false;
+const localMedia = new Map();                 // yeni yüklenen dosyalar için anlık önizleme
+
+// ---------- Tarih ----------
+(() => {
+  const d = new Date();
+  $("todayDate").textContent = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+  $("todayDay").textContent = d.toLocaleDateString("tr-TR", { weekday: "long" });
+})();
+const fmtDate = ms => ms ? new Date(ms).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" }) : "";
+function banner(msg) { $("banner").textContent = msg || ""; $("banner").hidden = !msg; }
+
+// ---------- GitHub ----------
+function guessRepo() {
+  const h = location.hostname, m = h.match(/^([^.]+)\.github\.io$/i);
+  if (!m) return { owner: "", repo: "" };
+  const seg = location.pathname.split("/").filter(Boolean)[0];
+  return { owner: m[1], repo: seg && !seg.includes(".") ? seg : h };
+}
+const b64FromText = s => { const bytes = new TextEncoder().encode(s); let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); };
+const textFromB64 = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, "")), c => c.charCodeAt(0)));
+const b64FromFile = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = () => rej(new Error("Dosya okunamadı.")); r.readAsDataURL(f); });
+
+async function gh(path, opts = {}) {
+  const r = await fetch("https://api.github.com" + path, {
+    ...opts,
+    headers: { "Authorization": "Bearer " + cfg.token, "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opts.headers || {}) },
+  });
+  if (r.status === 404) return null;
+  if (!r.ok) {
+    let msg = "GitHub isteği başarısız (" + r.status + ").";
+    if (r.status === 401) msg = "GitHub anahtarı geçersiz ya da süresi dolmuş.";
+    if (r.status === 403) msg = "GitHub anahtarının bu depoya yazma izni yok.";
+    if (r.status === 409 || r.status === 422) msg = "Dosya bu arada değişmiş. Tekrar dene.";
+    throw new Error(msg);
+  }
+  return r.status === 204 ? {} : r.json();
+}
+const enc = p => p.split("/").map(encodeURIComponent).join("/");
+async function getFile(repo, path) {
+  const j = await gh(`/repos/${cfg.owner}/${repo}/contents/${enc(path)}?t=${Date.now()}`);
+  return j ? { sha: j.sha, text: j.content ? textFromB64(j.content) : "" } : null;
+}
+async function putFile(repo, path, b64, message, sha) {
+  return gh(`/repos/${cfg.owner}/${repo}/contents/${enc(path)}`, { method: "PUT", body: JSON.stringify({ message, content: b64, ...(sha ? { sha } : {}) }) });
+}
+async function deleteFile(repo, path, message) {
+  const j = await gh(`/repos/${cfg.owner}/${repo}/contents/${enc(path)}`);
+  if (!j) return;
+  await gh(`/repos/${cfg.owner}/${repo}/contents/${enc(path)}`, { method: "DELETE", body: JSON.stringify({ message, sha: j.sha }) });
+}
+// Yazma işlemleri sırayla çalışsın
+let queue = Promise.resolve();
+const serial = fn => (queue = queue.then(fn, fn));
+
+async function savePosts(message) {
+  const cur = await getFile(cfg.repo, "posts.json");
+  const json = JSON.stringify(posts, null, 2);
+  await putFile(cfg.repo, "posts.json", b64FromText(json), message, cur && cur.sha);
+}
+
+// ---------- Veri yükleme ----------
+async function loadPosts() {
+  try {
+    if (loggedIn) {
+      const f = await getFile(cfg.repo, "posts.json");
+      posts = f && f.text ? JSON.parse(f.text) : [];
+    } else {
+      const r = await fetch("posts.json?t=" + Date.now(), { cache: "no-store" });
+      posts = r.ok ? await r.json() : [];
+    }
+    if (!Array.isArray(posts)) posts = [];
+    posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    if (!posts.some(p => p.id === currentId)) currentId = (location.hash.slice(1) && posts.some(p => p.id === location.hash.slice(1))) ? location.hash.slice(1) : (posts[0] && posts[0].id) || null;
+    banner("");
+  } catch (e) {
+    banner("Yazılar yüklenemedi. " + (e.message || "Sayfayı yenile."));
+  }
+  renderList(); if (!editing) renderReader(); loadNotes();
+}
+const mediaSrc = path => localMedia.get(path) || (loggedIn ? `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/HEAD/${enc(path)}` : enc(path));
+
+// ---------- Liste ----------
+function tagEl(key) { const t = tagOf(key), s = document.createElement("span"); s.className = "tag"; s.style.setProperty("--c", t.color); s.textContent = t.name; return s; }
+function renderList() {
+  const ul = $("postList"), q = $("search").value.trim().toLocaleLowerCase("tr");
+  ul.textContent = "";
+  const items = posts.filter(p => !q || ((p.title || "") + " " + (p.body || "")).toLocaleLowerCase("tr").includes(q));
+  if (!items.length) { const li = document.createElement("li"); li.className = "empty-list"; li.textContent = posts.length ? "Aramaya uyan yazı yok." : "Henüz yazı yok."; ul.append(li); return; }
+  for (const p of items) {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.type = "button"; b.setAttribute("aria-current", String(p.id === currentId && !editing));
+    const t = document.createElement("span"); t.className = "p-title"; t.textContent = p.title || "Başlıksız";
+    const m = document.createElement("span"); m.className = "p-meta"; m.append(tagEl(p.tag));
+    const bits = [fmtDate(p.createdAt)]; if (p.video) bits.push("video"); if (p.photos && p.photos.length) bits.push(p.photos.length + " foto");
+    const d = document.createElement("span"); d.textContent = bits.join(" · "); m.append(d);
+    b.append(t, m); b.addEventListener("click", () => openPost(p.id));
+    li.append(b); ul.append(li);
+  }
+}
+$("search").addEventListener("input", renderList);
+function openPost(id) {
+  editing = null; currentId = id;
+  try { history.replaceState(null, "", "#" + id); } catch (_) {}
+  renderList(); renderReader(); loadNotes();
+  if (window.innerWidth < 640) $("reader").scrollIntoView({ behavior: "smooth" });
+}
+
+// ---------- Okuma ----------
+function renderReader() {
+  const r = $("reader"); r.textContent = "";
+  const p = posts.find(x => x.id === currentId);
+  const a = document.createElement("article");
+  if (!p) {
+    a.className = "welcome";
+    const h = document.createElement("h1"); h.textContent = "Hoş geldin";
+    const t = document.createElement("p");
+    t.textContent = loggedIn ? "“+ Yeni yazı” ile ilk yazını ekle. Fotoğraf ve video da koyabilirsin." : "Henüz yazı yok.";
+    a.append(h, t); r.append(a); return;
+  }
+  const h = document.createElement("h1"); h.textContent = p.title || "Başlıksız";
+  const meta = document.createElement("div"); meta.className = "meta"; meta.append(tagEl(p.tag));
+  const d = document.createElement("span"); d.textContent = fmtDate(p.createdAt); meta.append(d);
+  if (p.updatedAt && p.updatedAt - p.createdAt > 60000) { const u = document.createElement("span"); u.textContent = "güncellendi " + fmtDate(p.updatedAt); meta.append(u); }
+  a.append(h, meta);
+  if (p.video) { const v = document.createElement("video"); v.controls = true; v.preload = "metadata"; v.src = mediaSrc(p.video); a.append(v); }
+  if (p.photos && p.photos.length) {
+    const g = document.createElement("div"); g.className = "gallery" + (p.photos.length === 1 ? " single" : "");
+    p.photos.forEach((ph, i) => {
+      const b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", "Fotoğrafı büyüt " + (i + 1));
+      const img = document.createElement("img"); img.src = mediaSrc(ph); img.alt = (p.title || "Fotoğraf") + " " + (i + 1); img.loading = "lazy";
+      b.append(img); b.addEventListener("click", () => { $("lbImg").src = img.src; $("lbImg").alt = img.alt; $("lightbox").showModal(); });
+      g.append(b);
+    });
+    a.append(g);
+  }
+  const body = document.createElement("div"); body.className = "body";
+  (p.body || "").split(/\n\s*\n/).filter(s => s.trim()).forEach(par => { const el = document.createElement("p"); el.textContent = par.trim(); body.append(el); });
+  a.append(body);
+  if (loggedIn) {
+    const act = document.createElement("div"); act.className = "actions";
+    const e = document.createElement("button"); e.className = "btn"; e.type = "button"; e.textContent = "Düzenle"; e.addEventListener("click", () => startEdit(p));
+    const del = document.createElement("button"); del.className = "btn danger"; del.type = "button"; del.textContent = "Sil";
+    let armed = false, timer;
+    del.addEventListener("click", () => {
+      if (!armed) { armed = true; del.classList.add("armed"); del.textContent = "Emin misin? Evet, sil"; timer = setTimeout(() => { armed = false; del.classList.remove("armed"); del.textContent = "Sil"; }, 4000); return; }
+      clearTimeout(timer); del.disabled = true; del.textContent = "Siliniyor…";
+      serial(async () => {
+        try {
+          posts = posts.filter(x => x.id !== p.id);
+          await savePosts("Yazı silindi: " + p.title);
+          for (const m of [p.video, ...(p.photos || [])].filter(Boolean)) { try { await deleteFile(cfg.repo, m, "Medya silindi"); } catch (_) {} }
+          currentId = posts[0] ? posts[0].id : null; renderList(); renderReader(); loadNotes();
+        } catch (err) { posts.push(p); posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); del.disabled = false; del.textContent = "Sil"; banner("Silinemedi: " + err.message); }
+      });
+    });
+    act.append(e, del); a.append(act);
+  }
+  r.append(a);
+}
+$("lbClose").addEventListener("click", () => $("lightbox").close());
+$("lightbox").addEventListener("click", e => { if (e.target === $("lightbox")) $("lightbox").close(); });
+
+// ---------- Editör ----------
+function startEdit(p) {
+  editing = p ? JSON.parse(JSON.stringify(p)) : { id: null, title: "", tag: "calisma", kind: "text", body: "", video: null, photos: [] };
+  editing.photos = editing.photos || [];
+  editing.newPhotos = []; editing.removed = [];
+  renderList(); renderEditor();
+}
+$("newBtn").addEventListener("click", () => startEdit(null));
+const slug = s => (s || "dosya").toLowerCase().replace(/[çğıöşü]/g, c => ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" })[c]).replace(/[^a-z0-9.]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "dosya";
+
+function renderEditor() {
+  const e = editing, r = $("reader"); r.textContent = "";
+  const f = document.createElement("form"); f.className = "editor"; f.noValidate = true;
+  f.innerHTML = `
+    <div class="field"><label for="f-title">Başlık</label><input id="f-title" type="text" maxlength="140" placeholder="Yazının başlığı"></div>
+    <div class="field"><span class="lbl" id="lbl-tag">Konu</span><div class="chips" id="f-tag" role="group" aria-labelledby="lbl-tag"></div></div>
+    <div class="field"><span class="lbl" id="lbl-kind">Tür</span>
+      <div class="seg" id="f-kind" role="group" aria-labelledby="lbl-kind">
+        <button type="button" data-kind="video">Video + açıklama</button><button type="button" data-kind="text">Sadece yazı</button>
+      </div></div>
+    <div class="field" id="videoField"><label for="f-video">Video</label><input id="f-video" type="file" accept="video/*">
+      <div class="hint" id="videoHint">En fazla ${MAX_MB} MB. Daha uzun videoları YouTube'a "liste dışı" yükleyip linkini açıklamaya yazabilirsin.</div></div>
+    <div class="field"><label for="f-photos">Fotoğraflar</label><div class="thumbs" id="f-thumbs"></div>
+      <input id="f-photos" type="file" accept="image/*" multiple><div class="hint">Birden fazla fotoğraf seçebilirsin. Her biri en fazla ${MAX_MB} MB.</div></div>
+    <div class="field"><label for="f-body" id="lbl-body">Yazı</label><textarea id="f-body" placeholder="Yazmaya başla. Paragraf için bir satır boş bırak."></textarea></div>
+    <div class="actions"><button class="btn primary" type="submit" id="f-save">Kaydet</button><button class="btn" type="button" id="f-cancel">Vazgeç</button></div>
+    <div class="status" id="f-status" role="status"></div>`;
+  r.append(f);
+  const title = f.querySelector("#f-title"), body = f.querySelector("#f-body");
+  title.value = e.title || ""; body.value = e.body || "";
+  const chips = f.querySelector("#f-tag");
+  TAGS.forEach(t => {
+    const c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.textContent = t.name; c.style.setProperty("--c", t.color);
+    c.setAttribute("aria-pressed", String(e.tag === t.key));
+    c.addEventListener("click", () => { e.tag = t.key; chips.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === c))); });
+    chips.append(c);
+  });
+  const vf = f.querySelector("#videoField"), lblBody = f.querySelector("#lbl-body");
+  const syncKind = () => { f.querySelectorAll("#f-kind button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.kind === e.kind))); vf.hidden = e.kind !== "video"; lblBody.textContent = e.kind === "video" ? "Açıklama" : "Yazı"; };
+  f.querySelectorAll("#f-kind button").forEach(b => b.addEventListener("click", () => { e.kind = b.dataset.kind; syncKind(); }));
+  syncKind();
+  if (e.video) f.querySelector("#videoHint").textContent = `Bu yazının bir videosu var. Yenisini seçersen eskisinin yerine geçer. En fazla ${MAX_MB} MB.`;
+
+  const thumbs = f.querySelector("#f-thumbs");
+  const drawThumbs = () => {
+    thumbs.textContent = "";
+    const add = (src, onRemove, label) => {
+      const d = document.createElement("div"); d.className = "thumb";
+      const img = document.createElement("img"); img.src = src; img.alt = label;
+      const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", label + " kaldır"); x.addEventListener("click", onRemove);
+      d.append(img, x); thumbs.append(d);
+    };
+    e.photos.forEach((ph, i) => add(mediaSrc(ph), () => { e.removed.push(ph); e.photos.splice(i, 1); drawThumbs(); }, "Fotoğraf " + (i + 1)));
+    e.newPhotos.forEach((nf, i) => add(nf.url, () => { URL.revokeObjectURL(nf.url); e.newPhotos.splice(i, 1); drawThumbs(); }, "Yeni fotoğraf " + (i + 1)));
+  };
+  drawThumbs();
+  f.querySelector("#f-photos").addEventListener("change", ev => {
+    const st = f.querySelector("#f-status"); st.textContent = ""; st.className = "status";
+    for (const file of ev.target.files) {
+      if (file.size > MAX_MB * 1048576) { st.className = "status err"; st.textContent = `${file.name} ${MAX_MB} MB'tan büyük, eklenmedi.`; continue; }
+      e.newPhotos.push({ file, url: URL.createObjectURL(file) });
+    }
+    ev.target.value = ""; drawThumbs();
+  });
+  f.querySelector("#f-cancel").addEventListener("click", () => { editing = null; renderList(); renderReader(); });
+
+  f.addEventListener("submit", ev => {
+    ev.preventDefault();
+    const st = f.querySelector("#f-status"), save = f.querySelector("#f-save");
+    st.className = "status";
+    if (!title.value.trim()) { st.textContent = "Bir başlık yaz."; st.className = "status err"; title.focus(); return; }
+    const vfile = f.querySelector("#f-video").files[0];
+    if (vfile && vfile.size > MAX_MB * 1048576) { st.textContent = `Video ${MAX_MB} MB'tan büyük. Kısalt ya da YouTube linki kullan.`; st.className = "status err"; return; }
+    save.disabled = true;
+    serial(async () => {
+      try {
+        const now = Date.now(), id = e.id || ("y" + now.toString(36));
+        const folder = "media/" + id + "/";
+        let video = e.video || null; const toDelete = [...e.removed];
+        if (e.kind === "video" && vfile) {
+          st.textContent = "Video yükleniyor… (büyük dosyalarda biraz sürebilir)";
+          const path = folder + now + "-" + slug(vfile.name);
+          await putFile(cfg.repo, path, await b64FromFile(vfile), "Video eklendi");
+          localMedia.set(path, URL.createObjectURL(vfile));
+          if (video) toDelete.push(video); video = path;
+        }
+        if (e.kind === "text" && video) { toDelete.push(video); video = null; }
+        const photos = [...e.photos];
+        for (let i = 0; i < e.newPhotos.length; i++) {
+          const nf = e.newPhotos[i];
+          st.textContent = `Fotoğraf yükleniyor (${i + 1}/${e.newPhotos.length})…`;
+          const path = folder + (now + i) + "-" + slug(nf.file.name);
+          await putFile(cfg.repo, path, await b64FromFile(nf.file), "Fotoğraf eklendi");
+          localMedia.set(path, nf.url); photos.push(path);
+        }
+        st.textContent = "Kaydediliyor…";
+        const post = { id, title: title.value.trim(), tag: e.tag, kind: e.kind, body: body.value, video, photos, createdAt: e.createdAt || now, updatedAt: now };
+        const i = posts.findIndex(x => x.id === id);
+        const before = posts.slice();
+        if (i >= 0) posts[i] = post; else posts.unshift(post);
+        posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        try { await savePosts((i >= 0 ? "Yazı güncellendi: " : "Yeni yazı: ") + post.title); }
+        catch (err) { posts = before; throw err; }
+        for (const m of toDelete) { try { await deleteFile(cfg.repo, m, "Medya kaldırıldı"); } catch (_) {} }
+        editing = null; currentId = id;
+        try { history.replaceState(null, "", "#" + id); } catch (_) {}
+        renderList(); renderReader(); loadNotes();
+        banner("Kaydedildi. Sitede herkese görünmesi 1-2 dakika sürebilir.");
+        setTimeout(() => banner(""), 6000);
+      } catch (err) {
+        save.disabled = false; st.className = "status err"; st.textContent = "Kaydedilemedi: " + (err.message || "bilinmeyen hata");
+      }
+    });
+  });
+  title.focus();
+}
+
+// ---------- Notlar ----------
+// Yazar girişliyse notlar gizli GitHub deposunda (notes.json) tutulur; değilse sadece bu tarayıcıda.
+let notesData = null, notesSha = null, noteKey = "genel", noteTimer = null;
+async function loadNotes() {
+  const p = posts.find(x => x.id === currentId);
+  noteKey = p ? p.id : "genel";
+  $("notesFor").textContent = (p ? "“" + (p.title || "Başlıksız") + "” için" : "Genel notlar") + (loggedIn ? " · gizli depoda, sadece sen görürsün" : " · sadece bu cihazda saklanır");
+  clearTimeout(noteTimer); $("notesStatus").textContent = "";
+  const ta = $("notes");
+  if (!loggedIn) { const all = store.get("defter-notes-local") || {}; ta.value = all[noteKey] || ""; ta.disabled = false; return; }
+  if (!notesData) {
+    ta.disabled = true;
+    try { const f = await getFile(cfg.notesRepo, "notes.json"); notesData = f && f.text ? JSON.parse(f.text) : {}; notesSha = f && f.sha; }
+    catch (e) { $("notesStatus").textContent = "Notlar yüklenemedi: " + e.message; return; }
+  }
+  ta.value = notesData[noteKey] || ""; ta.disabled = false;
+}
+$("notes").addEventListener("input", () => {
+  const key = noteKey, text = $("notes").value;
+  $("notesStatus").textContent = "Yazılıyor…";
+  clearTimeout(noteTimer);
+  if (!loggedIn) { const all = store.get("defter-notes-local") || {}; all[key] = text; store.set("defter-notes-local", all); $("notesStatus").textContent = "Bu cihaza kaydedildi"; return; }
+  notesData[key] = text;
+  noteTimer = setTimeout(() => serial(async () => {
+    try {
+      const res = await putFile(cfg.notesRepo, "notes.json", b64FromText(JSON.stringify(notesData, null, 2)), "Not güncellendi", notesSha);
+      notesSha = res && res.content && res.content.sha;
+      $("notesStatus").textContent = "Kaydedildi";
+    } catch (e) {
+      try { const f = await getFile(cfg.notesRepo, "notes.json"); notesSha = f && f.sha; } catch (_) {}
+      $("notesStatus").textContent = "Not kaydedilemedi, yazmaya devam edince tekrar denenecek.";
+    }
+  }), 1500);
+});
+
+// ---------- Giriş ----------
+function setLoginUi() {
+  $("newBtn").hidden = !loggedIn;
+  $("loginBtn").classList.toggle("on", loggedIn);
+  $("loginBtn").title = loggedIn ? "Yazar ayarları (giriş yapıldı)" : "Yazar girişi";
+}
+$("loginBtn").addEventListener("click", () => {
+  const g = guessRepo(), c = cfg || {};
+  $("g-owner").value = c.owner || g.owner; $("g-repo").value = c.repo || g.repo;
+  $("g-notes").value = c.notesRepo || "defter-notlar"; $("g-token").value = c.token || "";
+  $("g-status").textContent = ""; $("g-logout").hidden = !loggedIn;
+  $("loginDlg").showModal();
+});
+$("g-cancel").addEventListener("click", () => $("loginDlg").close());
+$("g-logout").addEventListener("click", () => { store.del("defter-cfg"); cfg = null; loggedIn = false; notesData = null; setLoginUi(); $("loginDlg").close(); loadPosts(); });
+$("loginForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const st = $("g-status"); st.className = "status"; st.textContent = "Kontrol ediliyor…";
+  const next = { owner: $("g-owner").value.trim(), repo: $("g-repo").value.trim(), notesRepo: $("g-notes").value.trim(), token: $("g-token").value.trim() };
+  if (!next.owner || !next.repo || !next.notesRepo || !next.token) { st.className = "status err"; st.textContent = "Tüm alanları doldur."; return; }
+  const prev = cfg; cfg = next;
+  try {
+    const a = await gh(`/repos/${next.owner}/${next.repo}`), b = await gh(`/repos/${next.owner}/${next.notesRepo}`);
+    if (!a) throw new Error("Site deposu bulunamadı.");
+    if (!b) throw new Error("Not deposu bulunamadı. GitHub'da gizli (private) olarak oluştur.");
+    if (a.permissions && !a.permissions.push) throw new Error("Anahtarın site deposuna yazma izni yok.");
+    store.set("defter-cfg", next); loggedIn = true; notesData = null; setLoginUi();
+    $("loginDlg").close(); loadPosts();
+  } catch (e) { cfg = prev; st.className = "status err"; st.textContent = e.message; }
+});
+
+// ---------- Başlat ----------
+(async () => {
+  if (cfg && cfg.token) {
+    try { const a = await gh(`/repos/${cfg.owner}/${cfg.repo}`); loggedIn = !!a; }
+    catch (_) { loggedIn = false; banner("Yazar girişi geçersiz oldu. Kalem simgesinden tekrar giriş yap."); }
+  }
+  setLoginUi(); loadPosts();
+})();
+</script>
+</body>
+</html>
